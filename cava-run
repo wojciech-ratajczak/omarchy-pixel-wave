@@ -1,0 +1,56 @@
+#!/bin/bash
+
+# Runs cava for the Pixel Wave bar widget: raw ASCII frames on stdout, one per
+# line, bars separated by ";" and scaled 0-100. Low frequencies meet in the
+# middle (stereo layout), which gives the mirrored-wave shape.
+#
+# Usage: cava-run <bars> <framerate>
+
+set -euo pipefail
+
+bars=${1:-18}
+fps=${2:-30}
+
+[[ $bars =~ ^[0-9]{1,3}$ ]] || { echo "cava-run: bars must be an integer" >&2; exit 2; }
+[[ $fps =~ ^[0-9]{1,3}$ ]] || { echo "cava-run: framerate must be an integer" >&2; exit 2; }
+
+bars=$((10#$bars))
+fps=$((10#$fps))
+(( bars < 4 )) && bars=4
+(( bars > 64 )) && bars=64
+(( bars % 2 )) && bars=$((bars + 1))
+(( fps < 5 )) && fps=5
+(( fps > 60 )) && fps=60
+
+command -v cava >/dev/null 2>&1 || { echo "cava-run: cava is not installed" >&2; exit 127; }
+[[ -n ${XDG_RUNTIME_DIR:-} && -d $XDG_RUNTIME_DIR ]] || { echo "cava-run: XDG_RUNTIME_DIR is not set" >&2; exit 2; }
+
+dir="$XDG_RUNTIME_DIR/omarchy-pixel-wave"
+mkdir -p -m 700 "$dir"
+conf="$dir/cava-$bars-$fps.conf"
+
+cat >"$conf" <<CONF
+[general]
+framerate = $fps
+bars = $bars
+autosens = 1
+sleep_timer = 2
+
+[input]
+method = pipewire
+source = auto
+
+[output]
+method = raw
+raw_target = /dev/stdout
+data_format = ascii
+ascii_max_range = 100
+bar_delimiter = 59
+frame_delimiter = 10
+channels = stereo
+
+[smoothing]
+noise_reduction = 70
+CONF
+
+exec cava -p "$conf"

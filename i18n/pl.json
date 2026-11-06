@@ -1,0 +1,11 @@
+{
+  "style.mirror": "odbita fala",
+  "style.bars": "korektor",
+  "style.dots": "linia kropek",
+  "tooltip.spectrum": "Dźwięk: widmo, basy pośrodku",
+  "tooltip.loudness": "Dźwięk: głośność w czasie",
+  "tooltip.mic": "Mikrofon: Voxtype nagrywa",
+  "tooltip.noCava": "Widmo wymaga programu cava, więc pokazuję głośność",
+  "tooltip.style": "Styl: %1",
+  "tooltip.hint": "Lewy klik: widmo lub głośność\nPrawy klik: następny styl"
+}
