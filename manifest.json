@@ -27,6 +27,7 @@
       "cellSize": 2,
       "framerate": 30,
       "color": "foreground",
+      "activeMonitorOnly": false,
       "showGrid": false,
       "micMode": true,
       "hideWhenIdle": false
@@ -93,6 +94,13 @@
         ],
         "defaultValue": "foreground",
         "description": "The theme colour the wave is drawn in. The microphone wave uses the accent, or the urgent colour when the wave is already accent."
+      },
+      {
+        "key": "activeMonitorOnly",
+        "type": "boolean",
+        "label": "Only on the focused monitor",
+        "defaultValue": false,
+        "description": "With more than one monitor, show the widget only on the bar of the monitor Hyprland has focused. A single monitor always shows it."
       },
       {
         "key": "showGrid",

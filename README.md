@@ -63,6 +63,7 @@ These keys go in the widget's entry in `~/.config/omarchy/shell.json`, under `ba
 | `cellSize` | `2` | Pixel size in px, 1–6. Bigger pixels mean fewer rows fit. |
 | `framerate` | `30` | Spectrum frame rate, 10–60 |
 | `color` | `"foreground"` | `foreground`, `accent` |
+| `activeMonitorOnly` | `false` | With several monitors, show it only on the focused monitor's bar |
 | `showGrid` | `false` | Draw unlit pixels faintly |
 | `micMode` | `true` | Show the microphone while Voxtype records |
 | `hideWhenIdle` | `false` | Leave the bar while nothing plays and the microphone is not shown, instead of resting as a flat line of dots |
