@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Pipewire
+import qs.Commons as Commons
 import "PixelWave.js" as PW
 
 // The engine behind Pixel Wave, one per shell. It owns the audio capture
@@ -88,13 +89,33 @@ Item {
   // PwNode is held past the PipeWire graph removing it.
   readonly property bool hasPlayback: {
     var list = Pipewire.nodes ? Pipewire.nodes.values : []
+    var names = []
+    for (var j = 0; j < list.length; j++)
+      if (list[j] && list[j].name) names.push(String(list[j].name))
     for (var i = 0; i < list.length; i++) {
       var n = list[i]
       if (!n || !n.isStream || n.isSink !== true) continue
-      if (String(n.name || "").indexOf("omarchy_speaker_tuning") === 0) continue
+      var name = String(n.name || "")
+      if (name.indexOf("omarchy_speaker_tuning") === 0) continue
+      if (platformHides(name, names)) continue
       return true
     }
     return false
+  }
+
+  // Streams of a platform's own audio processing (an Omarchy platform
+  // package can name them in /usr/share/omarchy-platform/audio.json) are
+  // always open, so they are not playback either; the audio panel leaves
+  // them out the same way. Guarded, as AudioNodes is not a documented
+  // plugin API: without it, nothing is left out.
+  function platformHides(name, names) {
+    try {
+      var audioNodes = Commons.AudioNodes
+      return !!audioNodes && typeof audioNodes.platformHides === "function"
+        && audioNodes.platformHides(name, names) === true
+    } catch (e) {
+      return false
+    }
   }
 
   // Keep listening a moment after the last stream closes, so a track change
