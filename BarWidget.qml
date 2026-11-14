@@ -53,7 +53,7 @@ BarWidget {
     else if (source === "spectrum") lines.push(strings.t("tooltip.spectrum"))
     else lines.push(strings.t("tooltip.loudness"))
     if (!micActive && cfg.data === "spectrum" && source === "loudness")
-      lines.push(strings.t("tooltip.noCava"))
+      lines.push(strings.t(wave && wave.cavaAvailable && wave.cavaBroken ? "tooltip.cavaFailed" : "tooltip.noCava"))
     lines.push(strings.t("tooltip.style").arg(styleName))
     lines.push("")
     lines.push(strings.t("tooltip.hint"))

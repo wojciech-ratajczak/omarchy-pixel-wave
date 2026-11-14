@@ -63,7 +63,13 @@ Item {
   }
 
   function cycleStyle() { persist("style", PW.nextOf(config.style, PW.STYLES)) }
-  function toggleData() { persist("data", config.data === "spectrum" ? "loudness" : "spectrum") }
+  function toggleData() {
+    var next = config.data === "spectrum" ? "loudness" : "spectrum"
+    persist("data", next)
+    // Asking for the spectrum again is the moment to look for a freshly
+    // installed cava, or to give one that kept crashing another go.
+    if (next === "spectrum" && !spectrumReady) recheckSpectrum()
+  }
 
   // --------------------------------------------------------------- state
 
@@ -150,6 +156,24 @@ Item {
   // ---------------------------------------------------- spectrum (cava)
 
   property int cavaFailures: 0
+  // How long the spectrum rests after cava kept crashing, doubled each time
+  // it happens again and reset by the first good frame.
+  readonly property int cavaRecoverMin: 60000
+  readonly property int cavaRecoverMax: 960000
+  property int cavaRecoverDelay: cavaRecoverMin
+
+  function recheckSpectrum() {
+    cavaRecover.stop()
+    cavaFailures = 0
+    cavaBroken = false
+    if (!probe.running) probe.running = true
+  }
+
+  Timer {
+    id: cavaRecover
+    interval: 60000 // set from cavaRecoverDelay before each start
+    onTriggered: root.recheckSpectrum()
+  }
 
   Timer {
     id: syncCava
@@ -185,6 +209,7 @@ Item {
         var frame = PW.parseCavaFrame(data, 100, 64)
         if (!frame) return
         root.cavaFailures = 0
+        root.cavaRecoverDelay = root.cavaRecoverMin
         root.setLevels(PW.fit(frame, root.config.columns))
       }
     }
@@ -197,12 +222,23 @@ Item {
         return
       }
       if (!root.cavaWanted) return
-      // Exited on its own while wanted: retry a few times, then fall back to
-      // the loudness wave until the next shell start.
+      // Exited on its own while wanted. cava-run exits 127 when cava is gone:
+      // show loudness until switching back to the spectrum looks again.
+      if (exitCode === 127) {
+        console.warn("io.github.wojciech-ratajczak.pixel-wave: cava is not installed; showing loudness instead")
+        root.cavaAvailable = false
+        return
+      }
+      // Otherwise retry a few times, then show loudness for a while (longer
+      // each time) and try again. Switching back to the spectrum retries at once.
       root.cavaFailures += 1
-      if (exitCode === 127 || root.cavaFailures >= 5) {
-        console.warn("io.github.wojciech-ratajczak.pixel-wave: cava keeps exiting (code " + exitCode + "); showing loudness instead")
+      if (root.cavaFailures >= 5) {
+        console.warn("io.github.wojciech-ratajczak.pixel-wave: cava keeps exiting (code " + exitCode + "); showing loudness for "
+          + Math.round(root.cavaRecoverDelay / 1000) + " s")
         root.cavaBroken = true
+        cavaRecover.interval = root.cavaRecoverDelay
+        cavaRecover.restart()
+        root.cavaRecoverDelay = Math.min(root.cavaRecoverMax, root.cavaRecoverDelay * 2)
         return
       }
       cavaRetry.restart()
