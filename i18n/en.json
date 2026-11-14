@@ -7,6 +7,7 @@
   "tooltip.mic": "Microphone: Voxtype is recording",
   "tooltip.noCava": "The spectrum needs cava, so this shows loudness",
   "tooltip.cavaFailed": "cava keeps stopping, so this shows loudness for now",
+  "tooltip.activeMonitor": "Shown only on the focused monitor",
   "tooltip.style": "Style: %1",
   "tooltip.hint": "Left-click: spectrum or loudness\nRight-click: next style",
   "setting.hideWhenIdle": "Hide when nothing is playing"

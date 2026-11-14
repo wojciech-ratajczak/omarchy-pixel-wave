@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import Quickshell.Hyprland
 import qs.Commons
 import qs.Commons as Commons
 import qs.Ui
@@ -56,15 +57,29 @@ BarWidget {
     else lines.push(strings.t("tooltip.loudness"))
     if (!micActive && cfg.data === "spectrum" && source === "loudness")
       lines.push(strings.t(wave && wave.cavaAvailable && wave.cavaBroken ? "tooltip.cavaFailed" : "tooltip.noCava"))
+    if (cfg.activeMonitorOnly && Quickshell.screens.length > 1) lines.push(strings.t("tooltip.activeMonitor"))
     lines.push(strings.t("tooltip.style").arg(styleName))
     lines.push("")
     lines.push(strings.t("tooltip.hint"))
     return lines.join("\n")
   }
 
-  visible: !idleHidden
-  implicitWidth: idleHidden ? 0 : button.implicitWidth
-  implicitHeight: idleHidden ? 0 : button.implicitHeight
+  // activeMonitorOnly: with several monitors, only the bar on the one
+  // Hyprland has focused shows the widget, and the others close the gap
+  // as they do for any hidden widget. Each bar surface is a window on its
+  // own screen, whose name is the Hyprland monitor name.
+  readonly property string screenName: {
+    var window = root.QsWindow.window
+    return window && window.screen ? String(window.screen.name || "") : ""
+  }
+  readonly property string focusedScreenName: Hyprland.focusedMonitor ? String(Hyprland.focusedMonitor.name || "") : ""
+  readonly property bool shownOnThisMonitor: PW.shownOnMonitor(cfg.activeMonitorOnly, Quickshell.screens.length,
+    screenName, focusedScreenName)
+  readonly property bool hidden: idleHidden || !shownOnThisMonitor
+
+  visible: !hidden
+  implicitWidth: hidden ? 0 : button.implicitWidth
+  implicitHeight: hidden ? 0 : button.implicitHeight
 
   WidgetButton {
     id: button
