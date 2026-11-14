@@ -23,6 +23,7 @@ var DEFAULTS = {
   cellSize: 2,
   framerate: 30,
   color: "foreground",
+  activeMonitorOnly: false,
   showGrid: false,
   micMode: true,
   hideWhenIdle: false
@@ -50,6 +51,7 @@ function config(entry) {
     cellSize: clampInt(e.cellSize, 1, 6, DEFAULTS.cellSize),
     framerate: clampInt(e.framerate, 10, 60, DEFAULTS.framerate),
     color: oneOf(e.color, COLORS, DEFAULTS.color),
+    activeMonitorOnly: e.activeMonitorOnly === true,
     showGrid: e.showGrid === true,
     micMode: e.micMode !== false,
     hideWhenIdle: e.hideWhenIdle === true
@@ -83,6 +85,18 @@ function findEntry(barConfig, id) {
 function nextOf(value, options) {
   var i = options.indexOf(value)
   return options[(i + 1) % options.length]
+}
+
+// Whether the copy of the widget on one monitor's bar is shown. With
+// activeMonitorOnly it follows Hyprland's focused monitor, but only when
+// there is more than one screen and both monitor names are known, so a
+// single monitor, or a moment before Hyprland reports focus, never hides it.
+function shownOnMonitor(activeMonitorOnly, screenCount, ownName, focusedName) {
+  if (activeMonitorOnly !== true || !(screenCount > 1)) return true
+  var own = String(ownName || "")
+  var focused = String(focusedName || "")
+  if (own === "" || focused === "") return true
+  return own === focused
 }
 
 function zeros(n) {

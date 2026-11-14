@@ -33,6 +33,26 @@ assert.equal(PW.findEntry({}, "io.github.wojciech-ratajczak.pixel-wave"), null)
 
 assert.equal(PW.nextOf("dots", PW.STYLES), "mirror")
 
+// activeMonitorOnly: off by default, only true when set to true
+assert.equal(PW.config(null).activeMonitorOnly, false)
+assert.equal(PW.config({ activeMonitorOnly: true }).activeMonitorOnly, true)
+assert.equal(PW.config({ activeMonitorOnly: "yes" }).activeMonitorOnly, false)
+{
+  const { shownOnMonitor } = new Function(src + "\nreturn { shownOnMonitor }")()
+  // off: shown everywhere
+  assert.equal(shownOnMonitor(false, 2, "DP-1", "HDMI-A-1"), true)
+  // one screen: always shown, whatever Hyprland reports
+  assert.equal(shownOnMonitor(true, 1, "eDP-1", "HDMI-A-1"), true)
+  assert.equal(shownOnMonitor(true, 0, "", ""), true)
+  // several screens: only on the focused one
+  assert.equal(shownOnMonitor(true, 2, "DP-1", "DP-1"), true)
+  assert.equal(shownOnMonitor(true, 2, "DP-1", "HDMI-A-1"), false)
+  // focus or own monitor not known yet: shown rather than lost
+  assert.equal(shownOnMonitor(true, 2, "DP-1", ""), true)
+  assert.equal(shownOnMonitor(true, 2, "", "DP-1"), true)
+  assert.equal(shownOnMonitor(true, 2, null, undefined), true)
+}
+
 // cava frames
 assert.deepEqual(PW.parseCavaFrame("0;50;100;", 100, 64), [0, 0.5, 1])
 assert.deepEqual(PW.parseCavaFrame("0;250;", 100, 64), [0, 1])
