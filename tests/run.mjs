@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs"
 import assert from "node:assert/strict"
 
 const src = readFileSync(new URL("../PixelWave.js", import.meta.url), "utf8").replace(/^\.pragma library\s*$/m, "")
-const PW = new Function(src + "\nreturn { STYLES, config, findEntry, nextOf, parseCavaFrame, peakToDb, nextReference, loudnessLevel, MIN_REF_DB, RANGE_DB, pushHistory, fit, rowsFor, cellOpacities, voxtypeRecording, sameLevels }")()
+const PW = new Function(src + "\nreturn { STYLES, config, findEntry, nextOf, parseCavaFrame, peakToDb, nextReference, loudnessLevel, MIN_REF_DB, RANGE_DB, pushHistory, fit, rowsFor, cellOpacities, voxtypeRecording, sameLevels, hiddenWhenIdle }")()
 
 // config: defaults, bounds, junk
 assert.deepEqual(PW.config(null).style, "mirror")
@@ -13,6 +13,17 @@ assert.equal(PW.config({ columns: true }).columns, 18)
 assert.equal(PW.config({ style: " BARS " }).style, "bars")
 assert.equal(PW.config({ style: "<b>x</b>" }).style, "mirror")
 assert.equal(PW.config({ micMode: false }).micMode, false)
+assert.equal(PW.config(null).hideWhenIdle, false)
+assert.equal(PW.config({ hideWhenIdle: true }).hideWhenIdle, true)
+assert.equal(PW.config({ hideWhenIdle: "true" }).hideWhenIdle, false)
+
+// hideWhenIdle: collapse only when asked, nothing plays and the mic is not shown
+const hiding = PW.config({ hideWhenIdle: true })
+assert.equal(PW.hiddenWhenIdle(hiding, false, false), true)
+assert.equal(PW.hiddenWhenIdle(hiding, true, false), false)
+assert.equal(PW.hiddenWhenIdle(hiding, false, true), false)
+assert.equal(PW.hiddenWhenIdle(PW.config({}), false, false), false)
+assert.equal(PW.hiddenWhenIdle(null, false, false), false)
 
 // findEntry: bar subtree or whole config
 const bar = { layout: { right: [{ id: "x" }, { id: "io.github.wojciech-ratajczak.pixel-wave", style: "dots" }] } }

@@ -28,7 +28,8 @@
       "framerate": 30,
       "color": "foreground",
       "showGrid": false,
-      "micMode": true
+      "micMode": true,
+      "hideWhenIdle": false
     },
     "schema": [
       {
@@ -104,6 +105,13 @@
         "type": "boolean",
         "label": "Show the microphone while Voxtype records",
         "defaultValue": true
+      },
+      {
+        "key": "hideWhenIdle",
+        "type": "boolean",
+        "label": "Hide when nothing is playing",
+        "defaultValue": false,
+        "description": "Leaves the bar while no application plays sound and the microphone is not shown, instead of resting as a flat line of dots."
       }
     ]
   },

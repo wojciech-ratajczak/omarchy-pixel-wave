@@ -121,6 +121,8 @@ Item {
   // Keep listening a moment after the last stream closes, so a track change
   // does not restart cava.
   readonly property bool outputLive: hasPlayback || playbackHold.running
+  // With hideWhenIdle on, every bar widget collapses while this is true.
+  readonly property bool idleHidden: PW.hiddenWhenIdle(config, outputLive, micActive)
   readonly property bool cavaWanted: source === "spectrum" && outputLive
   readonly property bool peakWanted: source === "mic" || (source === "loudness" && outputLive)
 
@@ -354,6 +356,7 @@ Item {
         + " loudness=" + Math.round(root.lastDb) + "dB/ref " + Math.round(root.loudRef) + "dB"
         + " capturing=" + (cava.running || peakMonitor.enabled)
         + " playback=" + root.hasPlayback
+        + " hidden=" + root.idleHidden
         + " cava=" + (root.cavaAvailable ? (root.cavaBroken ? "broken" : "yes") : "missing")
         + " voxtype=" + (root.voxtypeAvailable ? (root.voxtypeRecording ? "recording" : "idle") : "missing")
     }

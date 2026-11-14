@@ -24,7 +24,8 @@ var DEFAULTS = {
   framerate: 30,
   color: "foreground",
   showGrid: false,
-  micMode: true
+  micMode: true,
+  hideWhenIdle: false
 }
 
 function clampInt(value, min, max, fallback) {
@@ -50,8 +51,16 @@ function config(entry) {
     framerate: clampInt(e.framerate, 10, 60, DEFAULTS.framerate),
     color: oneOf(e.color, COLORS, DEFAULTS.color),
     showGrid: e.showGrid === true,
-    micMode: e.micMode !== false
+    micMode: e.micMode !== false,
+    hideWhenIdle: e.hideWhenIdle === true
   }
+}
+
+// Whether the widget collapses out of the bar: only when asked to, and only
+// while nothing plays (outputLive includes the short hold after a stream
+// closes) and the microphone is not shown.
+function hiddenWhenIdle(cfg, outputLive, micActive) {
+  return !!cfg && cfg.hideWhenIdle === true && !outputLive && !micActive
 }
 
 // This plugin's entry in the bar layout (shell.barConfig, or a whole shell

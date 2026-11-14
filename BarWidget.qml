@@ -21,6 +21,8 @@ BarWidget {
   readonly property var cfg: wave ? wave.config : PW.config(root.settings)
   readonly property string source: wave ? wave.source : "loudness"
   readonly property bool micActive: source === "mic"
+  // hideWhenIdle: out of the bar while nothing plays and the mic is not shown.
+  readonly property bool idleHidden: wave ? wave.idleHidden === true : false
 
   // Geometry: square cells with a gap of about half a cell, as many rows as
   // fit across the bar.
@@ -60,8 +62,9 @@ BarWidget {
     return lines.join("\n")
   }
 
-  implicitWidth: button.implicitWidth
-  implicitHeight: button.implicitHeight
+  visible: !idleHidden
+  implicitWidth: idleHidden ? 0 : button.implicitWidth
+  implicitHeight: idleHidden ? 0 : button.implicitHeight
 
   WidgetButton {
     id: button

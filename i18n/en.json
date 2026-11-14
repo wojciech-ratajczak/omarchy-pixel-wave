@@ -8,5 +8,6 @@
   "tooltip.noCava": "The spectrum needs cava, so this shows loudness",
   "tooltip.cavaFailed": "cava keeps stopping, so this shows loudness for now",
   "tooltip.style": "Style: %1",
-  "tooltip.hint": "Left-click: spectrum or loudness\nRight-click: next style"
+  "tooltip.hint": "Left-click: spectrum or loudness\nRight-click: next style",
+  "setting.hideWhenIdle": "Hide when nothing is playing"
 }

@@ -65,6 +65,7 @@ These keys go in the widget's entry in `~/.config/omarchy/shell.json`, under `ba
 | `color` | `"foreground"` | `foreground`, `accent` |
 | `showGrid` | `false` | Draw unlit pixels faintly |
 | `micMode` | `true` | Show the microphone while Voxtype records |
+| `hideWhenIdle` | `false` | Leave the bar while nothing plays and the microphone is not shown, instead of resting as a flat line of dots |
 
 Example:
 
