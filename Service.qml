@@ -157,8 +157,12 @@ Item {
     onTriggered: {
       if (root.cavaWanted && !cava.running && !cavaRetry.running) {
         cava.restartPending = false
+        cava.stopRequested = false
         cava.running = true
-      } else if ((!root.cavaWanted || cava.restartPending) && cava.running) {
+      } else if ((!root.cavaWanted || cava.restartPending) && cava.running && !cava.stopRequested) {
+        // cava keeps running until it has exited; onExited syncs again, so
+        // a source that comes back meanwhile restarts it at once.
+        cava.stopRequested = true
         cava.running = false
       }
     }
@@ -173,7 +177,8 @@ Item {
   Process {
     id: cava
     property bool restartPending: false
-    command: ["bash", root.pluginDir + "/cava-run", String(root.config.columns), String(root.config.framerate)]
+    property bool stopRequested: false
+    command:["bash", root.pluginDir + "/cava-run", String(root.config.columns), String(root.config.framerate)]
     stdout: SplitParser {
       onRead: function(data) {
         if (root.source !== "spectrum") return
@@ -184,7 +189,10 @@ Item {
       }
     }
     onExited: function(exitCode, exitStatus) {
-      if (cava.restartPending) {
+      // Stopped on purpose (the source changed, playback ended, or the
+      // settings changed): not a crash, so sync again without counting it.
+      if (cava.stopRequested || cava.restartPending) {
+        cava.stopRequested = false
         syncCava.restart()
         return
       }
