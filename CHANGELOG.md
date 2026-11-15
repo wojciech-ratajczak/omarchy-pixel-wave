@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.1
+
+- Paused players now count as idle. Spotify and browser tabs keep their audio stream open while paused, which kept the widget showing (and cava running) with nothing audible, so `hideWhenIdle` never hid it.
+
 ## 1.1.0
 
 - Fixed: stopping cava on purpose (switching source, playback ending, a settings change) and wanting it back before it had exited counted as a crash. It now restarts at once instead of pausing for the retry delay and counting toward the fallback to loudness.
