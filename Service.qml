@@ -86,8 +86,10 @@ Item {
     : (config.data === "spectrum" && spectrumReady ? "spectrum" : "loudness")
 
   // An application has a playback stream open. Read as a plain bool so no
-  // PwNode is held past the PipeWire graph removing it.
-  readonly property bool hasPlayback: {
+  // PwNode is held past the PipeWire graph removing it. Players keep their
+  // stream open while paused (Spotify, browser tabs), so this alone does not
+  // mean anything is audible; see hasPlayback.
+  readonly property bool hasStream: {
     var list = Pipewire.nodes ? Pipewire.nodes.values : []
     var names = []
     for (var j = 0; j < list.length; j++)
@@ -118,8 +120,13 @@ Item {
     }
   }
 
-  // Keep listening a moment after the last stream closes, so a track change
-  // does not restart cava.
+  // Something is actually playing: a stream is open and the default output
+  // carried sound within the last couple of seconds. A paused player keeps
+  // its stream but goes silent, so it no longer counts.
+  readonly property bool hasPlayback: hasStream && soundHold.running
+
+  // Keep listening a moment after playback stops, so a track change or a
+  // quiet gap does not restart cava.
   readonly property bool outputLive: hasPlayback || playbackHold.running
   // With hideWhenIdle on, every bar widget collapses while this is true.
   readonly property bool idleHidden: PW.hiddenWhenIdle(config, outputLive, micActive)
@@ -153,6 +160,21 @@ Item {
   Timer {
     id: playbackHold
     interval: 3000
+  }
+
+  // Restarted by every audible reading of the default output.
+  Timer {
+    id: soundHold
+    interval: 2000
+  }
+
+  // Watches the default output while any stream is open, only to tell
+  // playing from paused. Cheap: PipeWire computes the peaks itself.
+  PwNodePeakMonitor {
+    id: soundWatch
+    node: Pipewire.defaultAudioSink
+    enabled: root.hasStream && !!node
+    onPeakChanged: if (PW.isAudible(peak)) soundHold.restart()
   }
 
   function setLevels(next) {

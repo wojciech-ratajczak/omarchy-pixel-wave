@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs"
 import assert from "node:assert/strict"
 
 const src = readFileSync(new URL("../PixelWave.js", import.meta.url), "utf8").replace(/^\.pragma library\s*$/m, "")
-const PW = new Function(src + "\nreturn { STYLES, config, findEntry, nextOf, parseCavaFrame, peakToDb, nextReference, loudnessLevel, MIN_REF_DB, RANGE_DB, pushHistory, fit, rowsFor, cellOpacities, voxtypeRecording, sameLevels, hiddenWhenIdle }")()
+const PW = new Function(src + "\nreturn { STYLES, config, findEntry, nextOf, parseCavaFrame, peakToDb, nextReference, loudnessLevel, MIN_REF_DB, RANGE_DB, pushHistory, fit, rowsFor, cellOpacities, voxtypeRecording, sameLevels, hiddenWhenIdle, isAudible }")()
 
 // config: defaults, bounds, junk
 assert.deepEqual(PW.config(null).style, "mirror")
@@ -78,6 +78,13 @@ assert.equal(PW.loudnessLevel(-120, PW.MIN_REF_DB), 0)
 assert.ok(PW.loudnessLevel(-50, PW.MIN_REF_DB) < 0.25)
 assert.deepEqual(PW.pushHistory([1, 2, 3], 4, 3), [2, 3, 4])
 assert.deepEqual(PW.pushHistory([], 4, 3), [0, 0, 4])
+
+// silence and paused players are not playback
+assert.equal(PW.isAudible(0), false)
+assert.equal(PW.isAudible(0.0005), false)
+assert.equal(PW.isAudible(0.01), true)
+assert.equal(PW.isAudible(undefined), false)
+assert.equal(PW.isAudible(NaN), false)
 
 // fit keeps the loudest value per column
 assert.deepEqual(PW.fit([0, 1, 0, 0], 2), [1, 0])

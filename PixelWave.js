@@ -134,6 +134,14 @@ function parseCavaFrame(line, maxRange, maxBars) {
 }
 
 // A linear peak (0..1, as PipeWire reports it) in dB full scale.
+// A peak reading that counts as sound rather than silence (about -60 dBFS).
+var AUDIBLE_PEAK = 0.001
+
+function isAudible(peak) {
+  var p = Number(peak)
+  return isFinite(p) && p > AUDIBLE_PEAK
+}
+
 function peakToDb(peak) {
   var p = Number(peak)
   if (!isFinite(p) || p <= 0) return SILENT_DB
