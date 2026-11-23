@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.0
+
+- Four new styles, so right-click now cycles through seven: **peaks** (an equalizer whose peak caps hold for a moment and then fall back slowly), **drip** (bars hanging down from the top), **flame** (bars that fade out at their tips) and **pulse** (a glow in the middle that grows with the overall volume). Like the others, each rests as a visible line when it's quiet.
+- New `styles` setting: pick which styles right-click cycles through, and in what order. It takes a list (or a comma-separated string) of style names; leave it empty for all of them.
+- Left-click now plays or pauses your music over MPRIS: it pauses whatever is playing, or resumes the player you paused last. With no player around it does nothing. Switching between spectrum and loudness moved to the middle button, and `playPause` is available over IPC next to `toggleData`.
+- New `pausedGraceSeconds` setting (default 60): with `hideWhenIdle` on, the widget used to leave the bar a few seconds after you paused, so you couldn't click it to resume. It now stays while a player is paused, for up to this many seconds after the sound stopped. Set it to 0 for the old behaviour.
+
 ## 1.1.1
 
 - Paused players now count as idle. Spotify and browser tabs keep their audio stream open while paused, which kept the widget showing (and cava running) with nothing audible, so `hideWhenIdle` never hid it.

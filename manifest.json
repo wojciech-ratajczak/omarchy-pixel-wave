@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "io.github.wojciech-ratajczak.pixel-wave",
   "name": "Pixel Wave",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "author": "Wojciech Ratajczak",
   "license": "MIT",
   "description": "A pixel-block sound visualizer for the bar. Shows a cava spectrum or the loudness of what's playing in seven styles, from a mirrored wave and an equalizer to flames and a pulsing glow, and switches to your microphone in the accent colour while Voxtype records.",
