@@ -6,7 +6,7 @@ A pixel-block sound visualizer for the [Omarchy](https://omarchy.org) bar. It re
 
 - **Spectrum** (default) shows frequency bands from [cava](https://github.com/karlstav/cava). The bass sits in the middle, so music draws a mirrored wave.
 - **Loudness** scrolls the volume of what's playing across the widget. It uses PipeWire's peak monitor and needs nothing extra.
-- **Seven styles**: mirrored wave, equalizer, dotted line, equalizer with falling peak caps, bars dripping from the top, flames that fade at their tips, and a pulse that glows from the middle with the volume.
+- **Six styles**: mirrored wave, dotted line, an equalizer with falling peak caps, bars dripping from the top, flames that fade at their tips, and a pulse that glows from the middle with the volume.
 - **Mic mode**: while [Voxtype](https://voxtype.io) is recording, the widget shows your microphone in the theme's accent colour, so you can see it hears you.
 - It follows your theme colours and Omarchy's language setting (English and Polish included).
 
@@ -59,8 +59,8 @@ These keys go in the widget's entry in `~/.config/omarchy/shell.json`, under `ba
 
 | Key | Default | Values |
 |-----|---------|--------|
-| `style` | `"mirror"` | `mirror`, `bars`, `dots`, `peaks`, `drip`, `flame`, `pulse` |
-| `styles` | all seven | The styles right-click cycles through, in this order: an array such as `["bars", "peaks", "pulse"]`, or a comma-separated string such as `"bars,peaks,pulse"`. Unknown names and repeats are ignored; an empty list means all styles. |
+| `style` | `"mirror"` | `mirror`, `dots`, `peaks`, `drip`, `flame`, `pulse` (the old `bars` now means `peaks`) |
+| `styles` | all six | The styles right-click cycles through, in this order: an array such as `["mirror", "peaks", "pulse"]`, or a comma-separated string such as `"mirror,peaks,pulse"`. Unknown names and repeats are ignored; an empty list means all styles. |
 | `data` | `"spectrum"` | `spectrum`, `loudness` |
 | `columns` | `18` | 6–48 |
 | `cellSize` | `2` | Pixel size in px, 1–6. Bigger pixels mean fewer rows fit. |
@@ -75,7 +75,7 @@ These keys go in the widget's entry in `~/.config/omarchy/shell.json`, under `ba
 Example:
 
 ```json
-{ "id": "io.github.wojciech-ratajczak.pixel-wave", "style": "bars", "columns": 24, "color": "accent" }
+{ "id": "io.github.wojciech-ratajczak.pixel-wave", "style": "peaks", "columns": 24, "color": "accent" }
 ```
 
 ## How it works

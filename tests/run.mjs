@@ -10,7 +10,8 @@ assert.deepEqual(PW.config(null).style, "mirror")
 assert.equal(PW.config({ columns: 999 }).columns, 48)
 assert.equal(PW.config({ columns: "abc" }).columns, 18)
 assert.equal(PW.config({ columns: true }).columns, 18)
-assert.equal(PW.config({ style: " BARS " }).style, "bars")
+assert.equal(PW.config({ style: " BARS " }).style, "peaks") // retired name maps to its successor
+assert.equal(PW.config({ style: " DRIP " }).style, "drip")
 assert.equal(PW.config({ style: "<b>x</b>" }).style, "mirror")
 assert.equal(PW.config({ micMode: false }).micMode, false)
 assert.equal(PW.config(null).hideWhenIdle, false)
@@ -47,14 +48,14 @@ assert.equal(PW.findEntry({}, "io.github.wojciech-ratajczak.pixel-wave"), null)
 
 assert.equal(PW.nextOf("dots", PW.STYLES), "peaks")
 assert.equal(PW.nextOf("pulse", PW.STYLES), "mirror")
-assert.deepEqual(PW.STYLES, ["mirror", "bars", "dots", "peaks", "drip", "flame", "pulse"])
+assert.deepEqual(PW.STYLES, ["mirror", "dots", "peaks", "drip", "flame", "pulse"])
 for (const s of PW.STYLES) assert.equal(PW.config({ style: s }).style, s)
 
 // styles: which styles right-click cycles through
 assert.deepEqual(PW.config(null).styles, PW.STYLES)
-assert.deepEqual(PW.config({ styles: ["pulse", "bars"] }).styles, ["pulse", "bars"])
-assert.deepEqual(PW.config({ styles: "bars, PEAKS ,pulse" }).styles, ["bars", "peaks", "pulse"])
-assert.deepEqual(PW.config({ styles: ["bars", "nope", "bars", 3, null, "dots"] }).styles, ["bars", "dots"])
+assert.deepEqual(PW.config({ styles: ["pulse", "bars"] }).styles, ["pulse", "peaks"])
+assert.deepEqual(PW.config({ styles: "bars, PEAKS ,pulse" }).styles, ["peaks", "pulse"])
+assert.deepEqual(PW.config({ styles: ["bars", "nope", "bars", 3, null, "dots"] }).styles, ["peaks", "dots"])
 assert.deepEqual(PW.config({ styles: [] }).styles, PW.STYLES)
 assert.deepEqual(PW.config({ styles: "" }).styles, PW.STYLES)
 assert.deepEqual(PW.config({ styles: ["nope"] }).styles, PW.STYLES)
@@ -65,7 +66,7 @@ assert.deepEqual(PW.config({ styles: { length: 2, 0: "drip", 1: "flame" } }).sty
 assert.notEqual(PW.config(null).styles, PW.STYLES)
 // cycling stays within the list and wraps
 assert.equal(PW.nextStyle(PW.config({ style: "bars", styles: ["bars", "pulse"] })), "pulse")
-assert.equal(PW.nextStyle(PW.config({ style: "pulse", styles: ["bars", "pulse"] })), "bars")
+assert.equal(PW.nextStyle(PW.config({ style: "pulse", styles: ["bars", "pulse"] })), "peaks")
 // a current style outside the list goes to the first listed
 assert.equal(PW.nextStyle(PW.config({ style: "mirror", styles: ["flame", "drip"] })), "flame")
 // a single listed style stays put once there

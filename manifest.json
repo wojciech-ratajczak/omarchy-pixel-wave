@@ -24,7 +24,6 @@
       "style": "mirror",
       "styles": [
         "mirror",
-        "bars",
         "dots",
         "peaks",
         "drip",
@@ -49,7 +48,6 @@
         "label": "Style",
         "options": [
           "mirror",
-          "bars",
           "dots",
           "peaks",
           "drip",
@@ -57,7 +55,7 @@
           "pulse"
         ],
         "defaultValue": "mirror",
-        "description": "mirror is a wave mirrored around a centre line, bars an equalizer rising from the bottom, dots only the outline of the wave, peaks an equalizer with caps that fall back slowly, drip bars hanging from the top, flame bars that fade out at their tips, and pulse a glow in the middle that grows with the volume. Right-clicking the widget cycles them."
+        "description": "mirror is a wave mirrored around a centre line, dots only the outline of the wave, peaks an equalizer whose peak caps fall back slowly, drip bars hanging from the top, flame bars that fade out at their tips, and pulse a glow in the middle that grows with the volume. Right-clicking the widget cycles them."
       },
       {
         "key": "styles",
@@ -72,11 +70,6 @@
             "value": "mirror",
             "label": "Mirrored wave",
             "description": "A wave mirrored around a centre line"
-          },
-          {
-            "value": "bars",
-            "label": "Equalizer",
-            "description": "Bars rising from the bottom"
           },
           {
             "value": "dots",
@@ -106,7 +99,6 @@
         ],
         "defaultValue": [
           "mirror",
-          "bars",
           "dots",
           "peaks",
           "drip",

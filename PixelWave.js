@@ -3,7 +3,10 @@
 // Pure helpers for the Pixel Wave plugin, kept out of the QML so
 // tests/run.mjs can exercise them under Node.
 
-var STYLES = ["mirror", "bars", "dots", "peaks", "drip", "flame", "pulse"]
+var STYLES = ["mirror", "dots", "peaks", "drip", "flame", "pulse"]
+// Older names still accepted in settings: the plain equalizer was replaced by
+// peaks (the same bars plus falling peak caps) in 1.2.0.
+var STYLE_ALIASES = { bars: "peaks" }
 // Styles drawn from one edge of the bar rather than around a centre row, so
 // any row count works; the others need an odd count for the centre line.
 var EDGE_STYLES = ["bars", "peaks", "drip", "flame"]
@@ -46,6 +49,12 @@ function oneOf(value, options, fallback) {
   return options.indexOf(s) !== -1 ? s : fallback
 }
 
+// A style name from settings, with retired names mapped to their successor.
+function styleName(value) {
+  var s = String(value === undefined || value === null ? "" : value).trim().toLowerCase()
+  return Object.prototype.hasOwnProperty.call(STYLE_ALIASES, s) ? STYLE_ALIASES[s] : s
+}
+
 // The styles right-click cycles through, in the order given: an array or a
 // comma-separated string of style names. Unknown names and repeats are
 // dropped; nothing valid left (or no setting) means all of them.
@@ -58,7 +67,7 @@ function styleList(value) {
   var out = []
   for (var i = 0; i < items.length && i < 64; i++) {
     if (typeof items[i] !== "string") continue
-    var s = oneOf(items[i], STYLES, "")
+    var s = oneOf(styleName(items[i]), STYLES, "")
     if (s !== "" && out.indexOf(s) === -1) out.push(s)
   }
   return out.length > 0 ? out : STYLES.slice()
@@ -75,7 +84,7 @@ function nextStyle(cfg) {
 function config(entry) {
   var e = entry && typeof entry === "object" ? entry : {}
   return {
-    style: oneOf(e.style, STYLES, DEFAULTS.style),
+    style: oneOf(styleName(e.style), STYLES, DEFAULTS.style),
     styles: styleList(e.styles),
     data: oneOf(e.data, DATA_MODES, DEFAULTS.data),
     columns: clampInt(e.columns, 6, 48, DEFAULTS.columns),
