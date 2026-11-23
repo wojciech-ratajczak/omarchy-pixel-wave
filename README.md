@@ -42,7 +42,7 @@ This removes the plugin folder and its bar entry. The only other file it creates
 |-------|--------|
 | Left-click | Play or pause music: pauses whatever is playing, or resumes the player you paused last |
 | Middle-click | Switch between spectrum and loudness |
-| Right-click | Next style: mirrored wave → equalizer → dotted line → peaks → drip → flames → pulse (or only the ones listed in `styles`) |
+| Right-click | Next style: mirrored wave → dotted line → peaks → drip → flame → pulse (or only the ones listed in `styles`) |
 
 Play/pause works with any player that supports MPRIS (Spotify, browsers, mpv with mpv-mpris, and so on). The style and spectrum/loudness choices are saved in `~/.config/omarchy/shell.json`. The same actions are available over IPC, for keybindings:
 
