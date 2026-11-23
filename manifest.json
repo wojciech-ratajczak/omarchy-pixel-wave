@@ -5,7 +5,7 @@
   "version": "1.2.0",
   "author": "Wojciech Ratajczak",
   "license": "MIT",
-  "description": "A pixel-block sound visualizer for the bar. Shows a cava spectrum or the loudness of what's playing in seven styles, from a mirrored wave and an equalizer to flames and a pulsing glow, and switches to your microphone in the accent colour while Voxtype records.",
+  "description": "A pixel-block sound visualizer for the bar. Shows a cava spectrum or the loudness of what's playing in six styles, from a mirrored wave and a peak equalizer to flames and a pulsing glow, and switches to your microphone in the accent colour while Voxtype records.",
   "kinds": [
     "service",
     "bar-widget"
