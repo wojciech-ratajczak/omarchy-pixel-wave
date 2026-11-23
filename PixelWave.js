@@ -363,6 +363,55 @@ function cellOpacities(levels, columns, rows, style, gridOpacity, peaks) {
   return out
 }
 
+// playerctld mirrors whichever player it last saw, so it only counts when no
+// real player does; the shell's media service treats it the same way.
+function isProxyPlayer(dbusName, desktopEntry) {
+  return String(dbusName || "").toLowerCase().indexOf("playerctld") !== -1
+    || String(desktopEntry || "").toLowerCase() === "playerctld"
+}
+
+// What a play/pause click does, from plain descriptions of the MPRIS players:
+// { key, playing, paused, canPlay, canPause, canToggle, proxy, lastActive }.
+// While anything plays, every playing player is paused (a proxy only when
+// no real player plays). Otherwise the most recently active paused player
+// that can play is resumed. Returns { action: "pause" | "play" | "none",
+// steps: [{ index, call: "pause" | "play" | "togglePlaying" }] }.
+function playPausePlan(players) {
+  var list = Array.isArray(players) ? players : []
+  var playing = []
+  var realPlaying = false
+  for (var i = 0; i < list.length; i++) {
+    var p = list[i]
+    if (!p || p.playing !== true) continue
+    playing.push(i)
+    if (p.proxy !== true) realPlaying = true
+  }
+  if (playing.length > 0) {
+    var steps = []
+    for (var j = 0; j < playing.length; j++) {
+      var q = list[playing[j]]
+      if (realPlaying && q.proxy === true) continue
+      if (q.canPause === true) steps.push({ index: playing[j], call: "pause" })
+      else if (q.canToggle === true) steps.push({ index: playing[j], call: "togglePlaying" })
+    }
+    return { action: steps.length > 0 ? "pause" : "none", steps: steps }
+  }
+  var best = -1
+  for (var k = 0; k < list.length; k++) {
+    var c = list[k]
+    if (!c || c.paused !== true || (c.canPlay !== true && c.canToggle !== true)) continue
+    if (best === -1) { best = k; continue }
+    var b = list[best]
+    if ((b.proxy === true) !== (c.proxy === true)) {
+      if (b.proxy === true) best = k
+      continue
+    }
+    if ((Number(c.lastActive) || 0) > (Number(b.lastActive) || 0)) best = k
+  }
+  if (best === -1) return { action: "none", steps: [] }
+  return { action: "play", steps: [{ index: best, call: list[best].canPlay === true ? "play" : "togglePlaying" }] }
+}
+
 // Whether a line of `voxtype status --follow --format json` says it is
 // recording. Returns null for a line that carries no state.
 function voxtypeRecording(line) {

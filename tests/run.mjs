@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs"
 import assert from "node:assert/strict"
 
 const src = readFileSync(new URL("../PixelWave.js", import.meta.url), "utf8").replace(/^\.pragma library\s*$/m, "")
-const PW = new Function(src + "\nreturn { STYLES, config, styleList, nextStyle, findEntry, nextOf, parseCavaFrame, peakToDb, nextReference, loudnessLevel, MIN_REF_DB, RANGE_DB, pushHistory, fit, rowsFor, cellOpacities, nextPeaks, anyPeakAbove, overallLevel, PEAK_HOLD_MS, PEAK_FALL_MS, voxtypeRecording, sameLevels, hiddenWhenIdle, isAudible }")()
+const PW = new Function(src + "\nreturn { STYLES, config, styleList, nextStyle, findEntry, nextOf, parseCavaFrame, peakToDb, nextReference, loudnessLevel, MIN_REF_DB, RANGE_DB, pushHistory, fit, rowsFor, cellOpacities, nextPeaks, anyPeakAbove, overallLevel, PEAK_HOLD_MS, PEAK_FALL_MS, voxtypeRecording, playPausePlan, isProxyPlayer, sameLevels, hiddenWhenIdle, isAudible }")()
 
 // config: defaults, bounds, junk
 assert.deepEqual(PW.config(null).style, "mirror")
@@ -214,6 +214,37 @@ assert.deepEqual(PW.cellOpacities([0.5, 1], 2, 5, "peaks", 0), PW.cellOpacities(
   assert.equal(PW.overallLevel([1, 1]), 1)
   // unlit cells take the grid opacity
   assert.ok(PW.cellOpacities(PW.fit([], 9), 9, 5, "pulse", 0.14).every((o) => o >= 0.14))
+}
+
+// play/pause: pause what plays, else resume the paused player active last
+{
+  const pl = (o) => Object.assign({ playing: false, paused: false, canPlay: true, canPause: true, canToggle: true, proxy: false, lastActive: 0 }, o)
+  // nothing to act on
+  assert.deepEqual(PW.playPausePlan([]), { action: "none", steps: [] })
+  assert.deepEqual(PW.playPausePlan(null), { action: "none", steps: [] })
+  assert.deepEqual(PW.playPausePlan([null, pl({})]), { action: "none", steps: [] }) // stopped, not paused
+  // every playing real player is paused; paused ones are left alone
+  assert.deepEqual(PW.playPausePlan([pl({ playing: true }), pl({ paused: true }), pl({ playing: true })]),
+    { action: "pause", steps: [{ index: 0, call: "pause" }, { index: 2, call: "pause" }] })
+  // a playing proxy is skipped while a real player plays, used when alone
+  assert.deepEqual(PW.playPausePlan([pl({ playing: true, proxy: true }), pl({ playing: true })]).steps, [{ index: 1, call: "pause" }])
+  assert.deepEqual(PW.playPausePlan([pl({ playing: true, proxy: true })]).steps, [{ index: 0, call: "pause" }])
+  // no pause, but toggles: toggled; neither: nothing
+  assert.deepEqual(PW.playPausePlan([pl({ playing: true, canPause: false })]).steps, [{ index: 0, call: "togglePlaying" }])
+  assert.equal(PW.playPausePlan([pl({ playing: true, canPause: false, canToggle: false })]).action, "none")
+  // resume: the most recently active paused player that can play
+  assert.deepEqual(PW.playPausePlan([pl({ paused: true, lastActive: 3 }), pl({ paused: true, lastActive: 7 }), pl({ lastActive: 9 })]),
+    { action: "play", steps: [{ index: 1, call: "play" }] })
+  assert.deepEqual(PW.playPausePlan([pl({ paused: true, lastActive: 9, canPlay: false, canToggle: false }), pl({ paused: true, lastActive: 2 })]).steps,
+    [{ index: 1, call: "play" }])
+  assert.deepEqual(PW.playPausePlan([pl({ paused: true, canPlay: false })]).steps, [{ index: 0, call: "togglePlaying" }])
+  // a real player wins over a proxy whatever the order
+  assert.deepEqual(PW.playPausePlan([pl({ paused: true, proxy: true, lastActive: 9 }), pl({ paused: true, lastActive: 1 })]).steps, [{ index: 1, call: "play" }])
+  assert.deepEqual(PW.playPausePlan([pl({ paused: true, lastActive: 1 }), pl({ paused: true, proxy: true, lastActive: 9 })]).steps, [{ index: 0, call: "play" }])
+  assert.deepEqual(PW.playPausePlan([pl({ paused: true, proxy: true })]).steps, [{ index: 0, call: "play" }])
+  assert.equal(PW.isProxyPlayer("org.mpris.MediaPlayer2.playerctld", ""), true)
+  assert.equal(PW.isProxyPlayer("org.mpris.MediaPlayer2.spotify", "spotify"), false)
+  assert.equal(PW.isProxyPlayer(undefined, "playerctld"), true)
 }
 
 // voxtype status lines

@@ -9,7 +9,8 @@ import "PixelWave.js" as PW
 // Bar face of Pixel Wave: a grid of square cells lit from the levels the
 // service publishes. One instance per monitor; it only draws and relays.
 //
-//   left click    spectrum <-> loudness over time
+//   left click    play or pause music (MPRIS)
+//   middle click  spectrum <-> loudness over time
 //   right click   next style: mirrored wave, equalizer, dotted line,
 //                 equalizer with peaks, drip, flames, pulse
 BarWidget {
@@ -128,7 +129,8 @@ BarWidget {
     onPressed: function(pressedButton) {
       if (!root.wave) return
       if (pressedButton === Qt.RightButton) root.wave.cycleStyle()
-      else if (pressedButton === Qt.LeftButton) root.wave.toggleData()
+      else if (pressedButton === Qt.MiddleButton) root.wave.toggleData()
+      else if (pressedButton === Qt.LeftButton) root.wave.playPause()
     }
 
     Item {

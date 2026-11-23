@@ -40,14 +40,16 @@ This removes the plugin folder and its bar entry. The only other file it creates
 
 | Input | Action |
 |-------|--------|
-| Left-click | Switch between spectrum and loudness |
+| Left-click | Play or pause music: pauses whatever is playing, or resumes the player you paused last |
+| Middle-click | Switch between spectrum and loudness |
 | Right-click | Next style: mirrored wave → equalizer → dotted line → peaks → drip → flames → pulse (or only the ones listed in `styles`) |
 
-Both choices are saved in `~/.config/omarchy/shell.json`. The same actions are available over IPC, for keybindings:
+Play/pause works with any player that supports MPRIS (Spotify, browsers, mpv with mpv-mpris, and so on). The style and spectrum/loudness choices are saved in `~/.config/omarchy/shell.json`. The same actions are available over IPC, for keybindings:
 
 ```bash
 omarchy-shell io.github.wojciech-ratajczak.pixel-wave cycleStyle
 omarchy-shell io.github.wojciech-ratajczak.pixel-wave toggleData
+omarchy-shell io.github.wojciech-ratajczak.pixel-wave playPause
 omarchy-shell io.github.wojciech-ratajczak.pixel-wave status
 ```
 
@@ -82,6 +84,7 @@ Example:
 - The spectrum comes from `cava`, started through `cava-run` with raw ASCII output. If cava is missing or keeps crashing, the widget falls back to loudness.
 - Loudness adjusts its own gain: the wave spans 9 dB under the loudest recent level, so quiet speech and loud music both fill it.
 - Mic mode follows `voxtype status --follow --format json`.
+- Play/pause talks to players over MPRIS. While anything plays, a click pauses every playing player; otherwise it resumes the paused player that was playing most recently. `playerctld` only counts when no real player does.
 - The plugin makes no network requests.
 
 ## Development

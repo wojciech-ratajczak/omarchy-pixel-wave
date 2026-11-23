@@ -16,7 +16,7 @@
   },
   "barWidget": {
     "displayName": "Pixel Wave",
-    "description": "Pixel-block sound visualizer. Left-click switches spectrum and loudness, right-click changes the style.",
+    "description": "Pixel-block sound visualizer. Left-click plays or pauses music, middle-click switches spectrum and loudness, right-click changes the style.",
     "category": "Media",
     "defaultSection": "right",
     "allowMultiple": false,
@@ -122,7 +122,7 @@
           "loudness"
         ],
         "defaultValue": "spectrum",
-        "description": "spectrum shows frequency bands with the bass in the middle (needs cava); loudness scrolls the volume of what's playing over time. Left-clicking the widget switches them."
+        "description": "spectrum shows frequency bands with the bass in the middle (needs cava); loudness scrolls the volume of what's playing over time. Middle-clicking the widget switches them."
       },
       {
         "key": "columns",

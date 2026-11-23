@@ -13,6 +13,6 @@
   "tooltip.cavaFailed": "cava keeps stopping, so this shows loudness for now",
   "tooltip.activeMonitor": "Shown only on the focused monitor",
   "tooltip.style": "Style: %1",
-  "tooltip.hint": "Left-click: spectrum or loudness\nRight-click: next style",
+  "tooltip.hint": "Left-click: play or pause\nMiddle-click: spectrum or loudness\nRight-click: next style",
   "setting.hideWhenIdle": "Hide when nothing is playing"
 }

@@ -13,6 +13,6 @@
   "tooltip.cavaFailed": "cava ciągle się zatrzymuje, więc na razie pokazuję głośność",
   "tooltip.activeMonitor": "Widoczny tylko na aktywnym monitorze",
   "tooltip.style": "Styl: %1",
-  "tooltip.hint": "Lewy klik: widmo lub głośność\nPrawy klik: następny styl",
+  "tooltip.hint": "Lewy klik: odtwarzaj lub wstrzymaj\nŚrodkowy klik: widmo lub głośność\nPrawy klik: następny styl",
   "setting.hideWhenIdle": "Ukryj, gdy nic nie gra"
 }

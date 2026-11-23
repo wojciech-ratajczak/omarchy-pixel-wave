@@ -1,14 +1,15 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import Quickshell.Services.Mpris
 import Quickshell.Services.Pipewire
 import qs.Commons as Commons
 import "PixelWave.js" as PW
 
 // The engine behind Pixel Wave, one per shell. It owns the audio capture
 // (cava for the spectrum, PipeWire's peak monitor for loudness and the
-// microphone) and the Voxtype listener, and publishes `levels` for every
-// bar widget instance to draw. Capture only runs while an application has a
+// microphone), the Voxtype listener and the play/pause click, and publishes
+// `levels` for every bar widget instance to draw. Capture only runs while an application has a
 // playback stream open, or while Voxtype is recording.
 Item {
   id: root
@@ -365,14 +366,82 @@ Item {
     }
   }
 
+  // --------------------------------------------------- play/pause (MPRIS)
+
+  // The shell's media service only answers to its own bar, so this picks the
+  // player the same way: pause what plays, else resume the paused player
+  // that was active last (see PW.playPausePlan).
+  readonly property var players: Mpris.players ? Mpris.players.values : []
+  // When each player (by D-Bus name) last started or stopped playing.
+  property var playerActiveAt: ({})
+  property int playerSerial: 0
+
+  function playerKey(player) {
+    return player ? String(player.dbusName || player.identity || "") : ""
+  }
+
+  function touchPlayer(player) {
+    var key = playerKey(player)
+    if (!key) return
+    var next = {}
+    var alive = {}
+    for (var i = 0; i < players.length; i++) alive[playerKey(players[i])] = true
+    for (var k in playerActiveAt) if (alive[k]) next[k] = playerActiveAt[k]
+    playerSerial += 1
+    next[key] = playerSerial
+    playerActiveAt = next
+  }
+
+  Instantiator {
+    model: root.players
+    delegate: Connections {
+      required property var modelData
+      target: modelData
+      function onIsPlayingChanged() { root.touchPlayer(modelData) }
+    }
+  }
+
+  // Returns "pause", "play" or "none" (no player to act on).
+  function playPause() {
+    var list = players
+    var described = []
+    for (var i = 0; i < list.length; i++) {
+      var p = list[i]
+      described.push(p ? {
+        key: playerKey(p),
+        playing: p.isPlaying === true,
+        paused: p.playbackState === MprisPlaybackState.Paused,
+        canPlay: p.canPlay === true,
+        canPause: p.canPause === true,
+        canToggle: p.canTogglePlaying === true,
+        proxy: PW.isProxyPlayer(p.dbusName, p.desktopEntry),
+        lastActive: playerActiveAt[playerKey(p)] || 0
+      } : null)
+    }
+    var plan = PW.playPausePlan(described)
+    for (var j = 0; j < plan.steps.length; j++) {
+      var step = plan.steps[j]
+      var player = list[step.index]
+      try {
+        if (step.call === "pause") player.pause()
+        else if (step.call === "play") player.play()
+        else player.togglePlaying()
+      } catch (e) {
+        console.warn("io.github.wojciech-ratajczak.pixel-wave: " + step.call + " failed: " + e)
+      }
+    }
+    return plan.action
+  }
+
   // ---------------------------------------------------------------- IPC
 
-  // omarchy-shell io.github.wojciech-ratajczak.pixel-wave cycleStyle | toggleData | status
+  // omarchy-shell io.github.wojciech-ratajczak.pixel-wave cycleStyle | toggleData | playPause | status
   IpcHandler {
     target: "io.github.wojciech-ratajczak.pixel-wave"
 
     function cycleStyle(): void { root.cycleStyle() }
     function toggleData(): void { root.toggleData() }
+    function playPause(): string { return root.playPause() }
     function status(): string {
       return "source=" + root.source + " style=" + root.config.style
         + " loudness=" + Math.round(root.lastDb) + "dB/ref " + Math.round(root.loudRef) + "dB"
