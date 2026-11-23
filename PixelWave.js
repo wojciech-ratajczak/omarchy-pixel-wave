@@ -313,7 +313,9 @@ function pulseOpacities(levels, columns, rows, grid, out) {
   var cy = (rows - 1) / 2
   var minR = 1.6 / Math.max(1, hx)
   var radius = minR + amp * (1.2 - minR)
-  var bright = 0.45 + 0.55 * amp
+  // Brightness rises fastest at low volume, so ordinary music already glows
+  // clearly while silence stays a dim line.
+  var bright = 0.45 + 0.55 * Math.sqrt(amp)
   for (var c = 0; c < columns; c++) {
     for (var r = 0; r < rows; r++) {
       var dx = (c - cx) / hx
