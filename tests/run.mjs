@@ -25,6 +25,20 @@ assert.equal(PW.hiddenWhenIdle(hiding, false, true), false)
 assert.equal(PW.hiddenWhenIdle(PW.config({}), false, false), false)
 assert.equal(PW.hiddenWhenIdle(null, false, false), false)
 
+// pausedGraceSeconds: a paused player keeps the widget for a while
+assert.equal(PW.config(null).pausedGraceSeconds, 60)
+assert.equal(PW.config({ pausedGraceSeconds: 0 }).pausedGraceSeconds, 0)
+assert.equal(PW.config({ pausedGraceSeconds: 99999 }).pausedGraceSeconds, 3600)
+assert.equal(PW.config({ pausedGraceSeconds: -5 }).pausedGraceSeconds, 0)
+assert.equal(PW.config({ pausedGraceSeconds: "abc" }).pausedGraceSeconds, 60)
+assert.equal(PW.config({ pausedGraceSeconds: true }).pausedGraceSeconds, 60)
+assert.equal(PW.config({ pausedGraceSeconds: "120" }).pausedGraceSeconds, 120)
+assert.equal(PW.hiddenWhenIdle(hiding, false, false, true), false)
+assert.equal(PW.hiddenWhenIdle(hiding, false, false, false), true)
+assert.equal(PW.hiddenWhenIdle(PW.config({ hideWhenIdle: true, pausedGraceSeconds: 0 }), false, false, true), true)
+assert.equal(PW.hiddenWhenIdle(PW.config({}), false, false, true), false)
+assert.equal(PW.hiddenWhenIdle(hiding, false, false, "yes"), true)
+
 // findEntry: bar subtree or whole config
 const bar = { layout: { right: [{ id: "x" }, { id: "io.github.wojciech-ratajczak.pixel-wave", style: "dots" }] } }
 assert.equal(PW.findEntry(bar, "io.github.wojciech-ratajczak.pixel-wave").style, "dots")

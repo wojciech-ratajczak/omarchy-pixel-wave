@@ -130,7 +130,17 @@ Item {
   // quiet gap does not restart cava.
   readonly property bool outputLive: hasPlayback || playbackHold.running
   // With hideWhenIdle on, every bar widget collapses while this is true.
-  readonly property bool idleHidden: PW.hiddenWhenIdle(config, outputLive, micActive)
+  readonly property bool idleHidden: PW.hiddenWhenIdle(config, outputLive, micActive, pausedHold)
+
+  // A player sits paused (not stopped) and playback ended less than
+  // pausedGraceSeconds ago: the widget stays so it can be clicked to resume.
+  readonly property bool anyPaused: {
+    var list = players
+    for (var i = 0; i < list.length; i++)
+      if (list[i] && list[i].playbackState === MprisPlaybackState.Paused) return true
+    return false
+  }
+  readonly property bool pausedHold: anyPaused && pausedGrace.running
   readonly property bool cavaWanted: source === "spectrum" && outputLive
   readonly property bool peakWanted: source === "mic" || (source === "loudness" && outputLive)
 
@@ -142,7 +152,14 @@ Item {
   property real loudRef: PW.MIN_REF_DB
   property real lastDb: PW.SILENT_DB
 
-  onHasPlaybackChanged: if (!hasPlayback) playbackHold.restart()
+  onHasPlaybackChanged: {
+    if (hasPlayback) {
+      pausedGrace.stop()
+    } else {
+      playbackHold.restart()
+      if (config.pausedGraceSeconds > 0) pausedGrace.restart()
+    }
+  }
   onSourceChanged: {
     levels = PW.zeros(config.columns)
     loudRef = PW.MIN_REF_DB
@@ -161,6 +178,11 @@ Item {
   Timer {
     id: playbackHold
     interval: 3000
+  }
+
+  Timer {
+    id: pausedGrace
+    interval: Math.max(1, root.config.pausedGraceSeconds) * 1000
   }
 
   // Restarted by every audible reading of the default output.
@@ -448,6 +470,7 @@ Item {
         + " capturing=" + (cava.running || peakMonitor.enabled)
         + " playback=" + root.hasPlayback
         + " hidden=" + root.idleHidden
+        + " pausedHold=" + root.pausedHold
         + " cava=" + (root.cavaAvailable ? (root.cavaBroken ? "broken" : "yes") : "missing")
         + " voxtype=" + (root.voxtypeAvailable ? (root.voxtypeRecording ? "recording" : "idle") : "missing")
     }

@@ -39,7 +39,8 @@
       "activeMonitorOnly": false,
       "showGrid": false,
       "micMode": true,
-      "hideWhenIdle": false
+      "hideWhenIdle": false,
+      "pausedGraceSeconds": 60
     },
     "schema": [
       {
@@ -188,6 +189,16 @@
         "label": "Hide when nothing is playing",
         "defaultValue": false,
         "description": "Leaves the bar while no application plays sound and the microphone is not shown, instead of resting as a flat line of dots."
+      },
+      {
+        "key": "pausedGraceSeconds",
+        "type": "integer",
+        "label": "Stay after pausing (s)",
+        "min": 0,
+        "max": 3600,
+        "step": 10,
+        "defaultValue": 60,
+        "description": "With \"Hide when nothing is playing\" on, keep the widget in the bar this many seconds after you pause a player, so you can click it to resume. 0 hides it as soon as the sound stops."
       }
     ]
   },

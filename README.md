@@ -70,6 +70,7 @@ These keys go in the widget's entry in `~/.config/omarchy/shell.json`, under `ba
 | `showGrid` | `false` | Draw unlit pixels faintly |
 | `micMode` | `true` | Show the microphone while Voxtype records |
 | `hideWhenIdle` | `false` | Leave the bar while nothing plays and the microphone is not shown, instead of resting as a flat line of dots |
+| `pausedGraceSeconds` | `60` | With `hideWhenIdle`, how long the widget stays after you pause a player, so you can click it to resume: 0–3600 seconds, 0 to hide as soon as the sound stops. A stopped or closed player does not keep it. |
 
 Example:
 

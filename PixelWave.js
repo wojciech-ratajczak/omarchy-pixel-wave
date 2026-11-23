@@ -30,7 +30,8 @@ var DEFAULTS = {
   activeMonitorOnly: false,
   showGrid: false,
   micMode: true,
-  hideWhenIdle: false
+  hideWhenIdle: false,
+  pausedGraceSeconds: 60
 }
 
 function clampInt(value, min, max, fallback) {
@@ -84,15 +85,19 @@ function config(entry) {
     activeMonitorOnly: e.activeMonitorOnly === true,
     showGrid: e.showGrid === true,
     micMode: e.micMode !== false,
-    hideWhenIdle: e.hideWhenIdle === true
+    hideWhenIdle: e.hideWhenIdle === true,
+    pausedGraceSeconds: clampInt(e.pausedGraceSeconds, 0, 3600, DEFAULTS.pausedGraceSeconds)
   }
 }
 
 // Whether the widget collapses out of the bar: only when asked to, and only
 // while nothing plays (outputLive includes the short hold after a stream
-// closes) and the microphone is not shown.
-function hiddenWhenIdle(cfg, outputLive, micActive) {
-  return !!cfg && cfg.hideWhenIdle === true && !outputLive && !micActive
+// closes) and the microphone is not shown. pausedHold is true while a player
+// sits paused within pausedGraceSeconds of playback stopping, so the widget
+// stays to be clicked to resume; 0 seconds turns that off.
+function hiddenWhenIdle(cfg, outputLive, micActive, pausedHold) {
+  if (!cfg || cfg.hideWhenIdle !== true || outputLive || micActive) return false
+  return !(pausedHold === true && cfg.pausedGraceSeconds > 0)
 }
 
 // This plugin's entry in the bar layout (shell.barConfig, or a whole shell
