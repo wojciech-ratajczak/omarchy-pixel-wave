@@ -22,6 +22,15 @@
     "allowMultiple": false,
     "defaults": {
       "style": "mirror",
+      "styles": [
+        "mirror",
+        "bars",
+        "dots",
+        "peaks",
+        "drip",
+        "flame",
+        "pulse"
+      ],
       "data": "spectrum",
       "columns": 18,
       "cellSize": 2,
@@ -48,6 +57,61 @@
         ],
         "defaultValue": "mirror",
         "description": "mirror is a wave mirrored around a centre line, bars an equalizer rising from the bottom, dots only the outline of the wave, peaks an equalizer with caps that fall back slowly, drip bars hanging from the top, flame bars that fade out at their tips, and pulse a glow in the middle that grows with the volume. Right-clicking the widget cycles them."
+      },
+      {
+        "key": "styles",
+        "type": "multiselect",
+        "label": "Styles to cycle",
+        "description": "The styles right-clicking the widget cycles through. Leave empty to cycle through all of them.",
+        "noSelectionText": "All styles",
+        "placeholderText": "Search styles...",
+        "emptyText": "No styles",
+        "options": [
+          {
+            "value": "mirror",
+            "label": "Mirrored wave",
+            "description": "A wave mirrored around a centre line"
+          },
+          {
+            "value": "bars",
+            "label": "Equalizer",
+            "description": "Bars rising from the bottom"
+          },
+          {
+            "value": "dots",
+            "label": "Dotted line",
+            "description": "Only the outline of the wave"
+          },
+          {
+            "value": "peaks",
+            "label": "Equalizer with peaks",
+            "description": "Bars with caps that hold and fall back slowly"
+          },
+          {
+            "value": "drip",
+            "label": "Drip",
+            "description": "Bars hanging from the top"
+          },
+          {
+            "value": "flame",
+            "label": "Flames",
+            "description": "Bars whose tips fade out"
+          },
+          {
+            "value": "pulse",
+            "label": "Pulse",
+            "description": "A glow in the middle that grows with the volume"
+          }
+        ],
+        "defaultValue": [
+          "mirror",
+          "bars",
+          "dots",
+          "peaks",
+          "drip",
+          "flame",
+          "pulse"
+        ]
       },
       {
         "key": "data",

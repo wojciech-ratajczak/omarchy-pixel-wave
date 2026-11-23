@@ -41,7 +41,7 @@ This removes the plugin folder and its bar entry. The only other file it creates
 | Input | Action |
 |-------|--------|
 | Left-click | Switch between spectrum and loudness |
-| Right-click | Next style: mirrored wave → equalizer → dotted line → peaks → drip → flames → pulse |
+| Right-click | Next style: mirrored wave → equalizer → dotted line → peaks → drip → flames → pulse (or only the ones listed in `styles`) |
 
 Both choices are saved in `~/.config/omarchy/shell.json`. The same actions are available over IPC, for keybindings:
 
@@ -58,6 +58,7 @@ These keys go in the widget's entry in `~/.config/omarchy/shell.json`, under `ba
 | Key | Default | Values |
 |-----|---------|--------|
 | `style` | `"mirror"` | `mirror`, `bars`, `dots`, `peaks`, `drip`, `flame`, `pulse` |
+| `styles` | all seven | The styles right-click cycles through, in this order: an array such as `["bars", "peaks", "pulse"]`, or a comma-separated string such as `"bars,peaks,pulse"`. Unknown names and repeats are ignored; an empty list means all styles. |
 | `data` | `"spectrum"` | `spectrum`, `loudness` |
 | `columns` | `18` | 6–48 |
 | `cellSize` | `2` | Pixel size in px, 1–6. Bigger pixels mean fewer rows fit. |

@@ -21,6 +21,7 @@ var SILENT_DB = -120
 
 var DEFAULTS = {
   style: "mirror",
+  styles: STYLES.slice(),
   data: "spectrum",
   columns: 18,
   cellSize: 2,
@@ -44,11 +45,37 @@ function oneOf(value, options, fallback) {
   return options.indexOf(s) !== -1 ? s : fallback
 }
 
+// The styles right-click cycles through, in the order given: an array or a
+// comma-separated string of style names. Unknown names and repeats are
+// dropped; nothing valid left (or no setting) means all of them.
+function styleList(value) {
+  // A list handed over from C++ may be array-like rather than an Array.
+  var items = Array.isArray(value) ? value
+    : typeof value === "string" ? value.split(",")
+    : value && typeof value === "object" && typeof value.length === "number" ? Array.prototype.slice.call(value, 0, 64)
+    : []
+  var out = []
+  for (var i = 0; i < items.length && i < 64; i++) {
+    if (typeof items[i] !== "string") continue
+    var s = oneOf(items[i], STYLES, "")
+    if (s !== "" && out.indexOf(s) === -1) out.push(s)
+  }
+  return out.length > 0 ? out : STYLES.slice()
+}
+
+// The style a right-click moves to: the next listed one, or the first listed
+// when the current style is not in the list.
+function nextStyle(cfg) {
+  var list = cfg && Array.isArray(cfg.styles) && cfg.styles.length > 0 ? cfg.styles : STYLES
+  return nextOf(cfg ? cfg.style : "", list)
+}
+
 // The plugin's settings from its shell.json bar entry, validated and bounded.
 function config(entry) {
   var e = entry && typeof entry === "object" ? entry : {}
   return {
     style: oneOf(e.style, STYLES, DEFAULTS.style),
+    styles: styleList(e.styles),
     data: oneOf(e.data, DATA_MODES, DEFAULTS.data),
     columns: clampInt(e.columns, 6, 48, DEFAULTS.columns),
     cellSize: clampInt(e.cellSize, 1, 6, DEFAULTS.cellSize),

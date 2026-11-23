@@ -63,7 +63,7 @@ Item {
     if (shell && typeof shell.updateEntryInline === "function") shell.updateEntryInline(pluginId, next)
   }
 
-  function cycleStyle() { persist("style", PW.nextOf(config.style, PW.STYLES)) }
+  function cycleStyle() { persist("style", PW.nextStyle(config)) }
   function toggleData() {
     var next = config.data === "spectrum" ? "loudness" : "spectrum"
     persist("data", next)

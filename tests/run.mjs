@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs"
 import assert from "node:assert/strict"
 
 const src = readFileSync(new URL("../PixelWave.js", import.meta.url), "utf8").replace(/^\.pragma library\s*$/m, "")
-const PW = new Function(src + "\nreturn { STYLES, config, findEntry, nextOf, parseCavaFrame, peakToDb, nextReference, loudnessLevel, MIN_REF_DB, RANGE_DB, pushHistory, fit, rowsFor, cellOpacities, nextPeaks, anyPeakAbove, overallLevel, PEAK_HOLD_MS, PEAK_FALL_MS, voxtypeRecording, sameLevels, hiddenWhenIdle, isAudible }")()
+const PW = new Function(src + "\nreturn { STYLES, config, styleList, nextStyle, findEntry, nextOf, parseCavaFrame, peakToDb, nextReference, loudnessLevel, MIN_REF_DB, RANGE_DB, pushHistory, fit, rowsFor, cellOpacities, nextPeaks, anyPeakAbove, overallLevel, PEAK_HOLD_MS, PEAK_FALL_MS, voxtypeRecording, sameLevels, hiddenWhenIdle, isAudible }")()
 
 // config: defaults, bounds, junk
 assert.deepEqual(PW.config(null).style, "mirror")
@@ -35,6 +35,29 @@ assert.equal(PW.nextOf("dots", PW.STYLES), "peaks")
 assert.equal(PW.nextOf("pulse", PW.STYLES), "mirror")
 assert.deepEqual(PW.STYLES, ["mirror", "bars", "dots", "peaks", "drip", "flame", "pulse"])
 for (const s of PW.STYLES) assert.equal(PW.config({ style: s }).style, s)
+
+// styles: which styles right-click cycles through
+assert.deepEqual(PW.config(null).styles, PW.STYLES)
+assert.deepEqual(PW.config({ styles: ["pulse", "bars"] }).styles, ["pulse", "bars"])
+assert.deepEqual(PW.config({ styles: "bars, PEAKS ,pulse" }).styles, ["bars", "peaks", "pulse"])
+assert.deepEqual(PW.config({ styles: ["bars", "nope", "bars", 3, null, "dots"] }).styles, ["bars", "dots"])
+assert.deepEqual(PW.config({ styles: [] }).styles, PW.STYLES)
+assert.deepEqual(PW.config({ styles: "" }).styles, PW.STYLES)
+assert.deepEqual(PW.config({ styles: ["nope"] }).styles, PW.STYLES)
+assert.deepEqual(PW.config({ styles: 5 }).styles, PW.STYLES)
+assert.deepEqual(PW.config({ styles: { a: "bars" } }).styles, PW.STYLES)
+assert.deepEqual(PW.config({ styles: { length: 2, 0: "drip", 1: "flame" } }).styles, ["drip", "flame"])
+// the default list is a copy, not STYLES itself
+assert.notEqual(PW.config(null).styles, PW.STYLES)
+// cycling stays within the list and wraps
+assert.equal(PW.nextStyle(PW.config({ style: "bars", styles: ["bars", "pulse"] })), "pulse")
+assert.equal(PW.nextStyle(PW.config({ style: "pulse", styles: ["bars", "pulse"] })), "bars")
+// a current style outside the list goes to the first listed
+assert.equal(PW.nextStyle(PW.config({ style: "mirror", styles: ["flame", "drip"] })), "flame")
+// a single listed style stays put once there
+assert.equal(PW.nextStyle(PW.config({ style: "drip", styles: ["drip"] })), "drip")
+assert.equal(PW.nextStyle(PW.config({ style: "dots" })), "peaks")
+assert.equal(PW.nextStyle(null), "mirror")
 
 // activeMonitorOnly: off by default, only true when set to true
 assert.equal(PW.config(null).activeMonitorOnly, false)
