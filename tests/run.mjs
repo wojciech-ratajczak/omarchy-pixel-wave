@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs"
 import assert from "node:assert/strict"
 
 const src = readFileSync(new URL("../PixelWave.js", import.meta.url), "utf8").replace(/^\.pragma library\s*$/m, "")
-const PW = new Function(src + "\nreturn { STYLES, config, findEntry, nextOf, parseCavaFrame, peakToDb, nextReference, loudnessLevel, MIN_REF_DB, RANGE_DB, pushHistory, fit, rowsFor, cellOpacities, voxtypeRecording, sameLevels, hiddenWhenIdle, isAudible }")()
+const PW = new Function(src + "\nreturn { STYLES, config, findEntry, nextOf, parseCavaFrame, peakToDb, nextReference, loudnessLevel, MIN_REF_DB, RANGE_DB, pushHistory, fit, rowsFor, cellOpacities, nextPeaks, anyPeakAbove, overallLevel, PEAK_HOLD_MS, PEAK_FALL_MS, voxtypeRecording, sameLevels, hiddenWhenIdle, isAudible }")()
 
 // config: defaults, bounds, junk
 assert.deepEqual(PW.config(null).style, "mirror")
@@ -31,7 +31,10 @@ assert.equal(PW.findEntry(bar, "io.github.wojciech-ratajczak.pixel-wave").style,
 assert.equal(PW.findEntry({ bar }, "io.github.wojciech-ratajczak.pixel-wave").style, "dots")
 assert.equal(PW.findEntry({}, "io.github.wojciech-ratajczak.pixel-wave"), null)
 
-assert.equal(PW.nextOf("dots", PW.STYLES), "mirror")
+assert.equal(PW.nextOf("dots", PW.STYLES), "peaks")
+assert.equal(PW.nextOf("pulse", PW.STYLES), "mirror")
+assert.deepEqual(PW.STYLES, ["mirror", "bars", "dots", "peaks", "drip", "flame", "pulse"])
+for (const s of PW.STYLES) assert.equal(PW.config({ style: s }).style, s)
 
 // activeMonitorOnly: off by default, only true when set to true
 assert.equal(PW.config(null).activeMonitorOnly, false)
@@ -94,6 +97,8 @@ assert.deepEqual(PW.fit([0.5], 3), [0.5, 0.5, 0.5])
 assert.equal(PW.rowsFor(16, 2, 1, "mirror"), 5)
 assert.equal(PW.rowsFor(18, 2, 1, "mirror"), 5)
 assert.equal(PW.rowsFor(18, 2, 1, "bars"), 6)
+for (const s of ["peaks", "drip", "flame"]) assert.equal(PW.rowsFor(18, 2, 1, s), 6)
+for (const s of ["dots", "pulse"]) assert.equal(PW.rowsFor(18, 2, 1, s), 5)
 
 // silence rests as a flat line
 const lit = (ops) => ops.map((o) => (o > 0 ? 1 : 0))
@@ -102,6 +107,91 @@ assert.deepEqual(lit(PW.cellOpacities([0], 1, 5, "bars", 0)), [0, 0, 0, 0, 1])
 assert.deepEqual(lit(PW.cellOpacities([1], 1, 5, "mirror", 0)), [1, 1, 1, 1, 1])
 assert.deepEqual(lit(PW.cellOpacities([1], 1, 5, "dots", 0)), [1, 0, 0, 0, 1])
 assert.deepEqual(lit(PW.cellOpacities([0.5], 1, 5, "dots", 0)), [0, 1, 0, 1, 0])
+
+// every style rests visibly at silence
+for (const s of PW.STYLES) {
+  const ops = PW.cellOpacities(PW.fit([], 9), 9, 5, s, 0, s === "peaks" ? PW.nextPeaks([], PW.fit([], 9), 0, 5) : null)
+  assert.equal(ops.length, 45, s)
+  assert.ok(ops.some((o) => o > 0), s + " rests visibly")
+  assert.ok(ops.every((o) => o >= 0 && o <= 1), s + " opacities in range")
+}
+
+// drip hangs from the top: silence lights the top row, full lights it all
+assert.deepEqual(lit(PW.cellOpacities([0], 1, 5, "drip", 0)), [1, 0, 0, 0, 0])
+assert.deepEqual(lit(PW.cellOpacities([0.5], 1, 5, "drip", 0)), [1, 1, 1, 0, 0])
+assert.deepEqual(lit(PW.cellOpacities([1], 1, 5, "drip", 0)), [1, 1, 1, 1, 1])
+assert.ok(PW.cellOpacities([1], 1, 5, "drip", 0)[0] > PW.cellOpacities([1], 1, 5, "drip", 0)[4])
+
+// flame: bottom-based, the tip fades
+assert.deepEqual(lit(PW.cellOpacities([0], 1, 5, "flame", 0)), [0, 0, 0, 0, 1])
+assert.deepEqual(PW.cellOpacities([1], 1, 5, "flame", 0), [0.3, 0.55, 0.8, 1, 1])
+assert.deepEqual(PW.cellOpacities([0.5], 1, 5, "flame", 0), [0, 0, 0.3, 0.55, 0.8])
+{
+  const rest = PW.cellOpacities([0], 1, 5, "flame", 0)[4]
+  assert.ok(rest > 0 && rest < 1, "flame rests dim but visible")
+}
+
+// peaks: a cap jumps to a new high, holds, then falls about a row per PEAK_FALL_MS
+{
+  let p = PW.nextPeaks([], [1, 0.5], 0, 5)
+  assert.deepEqual(p.map((x) => x.level), [1, 0.5])
+  // the bar drops at once; the cap holds
+  p = PW.nextPeaks(p, [0, 0], 100, 5)
+  assert.deepEqual(p.map((x) => x.level), [1, 0.5])
+  assert.equal(p[0].hold, PW.PEAK_HOLD_MS - 100)
+  // the hold runs out, then it falls one row (0.25 of 5 rows) per PEAK_FALL_MS
+  p = PW.nextPeaks(p, [0, 0], PW.PEAK_HOLD_MS - 100 + PW.PEAK_FALL_MS, 5)
+  assert.ok(Math.abs(p[0].level - 0.75) < 1e-9)
+  assert.ok(Math.abs(p[1].level - 0.25) < 1e-9)
+  assert.equal(p[0].hold, 0)
+  // never below the bar
+  p = PW.nextPeaks(p, [0.6, 0], 1000, 5)
+  assert.ok(Math.abs(p[0].level - 0.6) < 1e-9)
+  assert.equal(p[1].level, 0)
+  // a new high resets the hold
+  p = PW.nextPeaks(p, [0.9, 0], 50, 5)
+  assert.equal(p[0].level, 0.9)
+  assert.equal(p[0].hold, PW.PEAK_HOLD_MS)
+  // junk in, sane out
+  assert.deepEqual(PW.nextPeaks(null, null, NaN, 5), [])
+  assert.equal(PW.nextPeaks([{ level: "x" }], [NaN], -5, 5)[0].level, 0)
+  assert.equal(PW.anyPeakAbove([{ level: 0.5 }], [0.5], 0), false)
+  assert.equal(PW.anyPeakAbove([{ level: 0.5 }], [0.2], 0), true)
+  assert.equal(PW.anyPeakAbove([{ level: 0 }], [0], 0), false)
+}
+// peaks draws bars from the bottom plus a full-opacity cap above the bar
+assert.deepEqual(lit(PW.cellOpacities([0], 1, 5, "peaks", 0, [{ level: 0 }])), [0, 0, 0, 0, 1])
+assert.deepEqual(lit(PW.cellOpacities([0.25], 1, 5, "peaks", 0, [{ level: 1 }])), [1, 0, 0, 1, 1])
+assert.equal(PW.cellOpacities([0.25], 1, 5, "peaks", 0, [{ level: 1 }])[0], 1)
+// a cap level with the top of the bar is just the bar
+assert.deepEqual(PW.cellOpacities([0.5], 1, 5, "peaks", 0, [{ level: 0.5 }]), PW.cellOpacities([0.5], 1, 5, "bars", 0))
+// without caps it is bars
+assert.deepEqual(PW.cellOpacities([0.5, 1], 2, 5, "peaks", 0), PW.cellOpacities([0.5, 1], 2, 5, "bars", 0))
+
+// pulse: a centred glow that grows with the overall loudness
+{
+  const count = (ops) => ops.filter((o) => o > 0).length
+  const quiet = PW.cellOpacities(PW.fit([], 9), 9, 5, "pulse", 0)
+  const mid = PW.cellOpacities(new Array(9).fill(0.4), 9, 5, "pulse", 0)
+  const loud = PW.cellOpacities(new Array(9).fill(1), 9, 5, "pulse", 0)
+  // silence: a short dim line on the centre row
+  quiet.forEach((o, i) => { if (o > 0) assert.equal(i % 5, 2, "silent pulse stays on the centre row") })
+  assert.ok(count(quiet) >= 1 && count(quiet) <= 3)
+  assert.ok(quiet[4 * 5 + 2] > 0 && quiet[4 * 5 + 2] < 0.6, "silent centre is dim")
+  assert.ok(count(quiet) < count(mid) && count(mid) < count(loud))
+  // full volume reaches both ends of the centre row and is brightest in the middle
+  assert.ok(loud[0 * 5 + 2] > 0 && loud[8 * 5 + 2] > 0)
+  assert.ok(loud[4 * 5 + 2] > loud[0 * 5 + 2])
+  assert.ok(loud[4 * 5 + 2] > mid[4 * 5 + 2])
+  // symmetric
+  for (let c = 0; c < 9; c++) for (let r = 0; r < 5; r++) assert.equal(mid[c * 5 + r], mid[(8 - c) * 5 + (4 - r)])
+  // ignores the shape: same loudness, same glow
+  assert.deepEqual(PW.cellOpacities([1, 0, 0, 0, 0, 0, 0, 0, 0], 9, 5, "pulse", 0), PW.cellOpacities([0, 0, 0, 0, 0, 0, 0, 0, 1], 9, 5, "pulse", 0))
+  assert.equal(PW.overallLevel([]), 0)
+  assert.equal(PW.overallLevel([1, 1]), 1)
+  // unlit cells take the grid opacity
+  assert.ok(PW.cellOpacities(PW.fit([], 9), 9, 5, "pulse", 0.14).every((o) => o >= 0.14))
+}
 
 // voxtype status lines
 assert.equal(PW.voxtypeRecording('{"text": "x", "alt": "recording", "class": "recording"}'), true)

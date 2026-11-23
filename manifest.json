@@ -5,7 +5,7 @@
   "version": "1.1.1",
   "author": "Wojciech Ratajczak",
   "license": "MIT",
-  "description": "A pixel-block sound visualizer for the bar. Shows a cava spectrum or the loudness of what's playing as a mirrored wave, an equalizer, or a dotted line, and switches to your microphone in the accent colour while Voxtype records.",
+  "description": "A pixel-block sound visualizer for the bar. Shows a cava spectrum or the loudness of what's playing in seven styles, from a mirrored wave and an equalizer to flames and a pulsing glow, and switches to your microphone in the accent colour while Voxtype records.",
   "kinds": [
     "service",
     "bar-widget"
@@ -40,10 +40,14 @@
         "options": [
           "mirror",
           "bars",
-          "dots"
+          "dots",
+          "peaks",
+          "drip",
+          "flame",
+          "pulse"
         ],
         "defaultValue": "mirror",
-        "description": "mirror is a wave mirrored around a centre line, bars an equalizer rising from the bottom, dots only the outline of the wave. Right-clicking the widget cycles them."
+        "description": "mirror is a wave mirrored around a centre line, bars an equalizer rising from the bottom, dots only the outline of the wave, peaks an equalizer with caps that fall back slowly, drip bars hanging from the top, flame bars that fade out at their tips, and pulse a glow in the middle that grows with the volume. Right-clicking the widget cycles them."
       },
       {
         "key": "data",

@@ -6,7 +6,7 @@ A pixel-block sound visualizer for the [Omarchy](https://omarchy.org) bar. It re
 
 - **Spectrum** (default) shows frequency bands from [cava](https://github.com/karlstav/cava). The bass sits in the middle, so music draws a mirrored wave.
 - **Loudness** scrolls the volume of what's playing across the widget. It uses PipeWire's peak monitor and needs nothing extra.
-- **Three styles**: mirrored wave, equalizer, and dotted line.
+- **Seven styles**: mirrored wave, equalizer, dotted line, equalizer with falling peak caps, bars dripping from the top, flames that fade at their tips, and a pulse that glows from the middle with the volume.
 - **Mic mode**: while [Voxtype](https://voxtype.io) is recording, the widget shows your microphone in the theme's accent colour, so you can see it hears you.
 - It follows your theme colours and Omarchy's language setting (English and Polish included).
 
@@ -41,7 +41,7 @@ This removes the plugin folder and its bar entry. The only other file it creates
 | Input | Action |
 |-------|--------|
 | Left-click | Switch between spectrum and loudness |
-| Right-click | Next style: mirrored wave → equalizer → dotted line |
+| Right-click | Next style: mirrored wave → equalizer → dotted line → peaks → drip → flames → pulse |
 
 Both choices are saved in `~/.config/omarchy/shell.json`. The same actions are available over IPC, for keybindings:
 
@@ -57,7 +57,7 @@ These keys go in the widget's entry in `~/.config/omarchy/shell.json`, under `ba
 
 | Key | Default | Values |
 |-----|---------|--------|
-| `style` | `"mirror"` | `mirror`, `bars`, `dots` |
+| `style` | `"mirror"` | `mirror`, `bars`, `dots`, `peaks`, `drip`, `flame`, `pulse` |
 | `data` | `"spectrum"` | `spectrum`, `loudness` |
 | `columns` | `18` | 6–48 |
 | `cellSize` | `2` | Pixel size in px, 1–6. Bigger pixels mean fewer rows fit. |

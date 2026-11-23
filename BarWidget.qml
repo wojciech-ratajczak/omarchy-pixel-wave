@@ -10,7 +10,8 @@ import "PixelWave.js" as PW
 // service publishes. One instance per monitor; it only draws and relays.
 //
 //   left click    spectrum <-> loudness over time
-//   right click   next style: mirrored wave, equalizer, dotted line
+//   right click   next style: mirrored wave, equalizer, dotted line,
+//                 equalizer with peaks, drip, flames, pulse
 BarWidget {
   id: root
   moduleName: "io.github.wojciech-ratajczak.pixel-wave"
@@ -36,7 +37,39 @@ BarWidget {
   readonly property int crossSpan: rows * pitch - gap
 
   readonly property var levels: wave ? PW.fit(wave.levels, columns) : PW.zeros(columns)
-  readonly property var opacities: PW.cellOpacities(levels, columns, rows, cfg.style, cfg.showGrid ? 0.14 : 0)
+  readonly property var opacities: PW.cellOpacities(levels, columns, rows, cfg.style, cfg.showGrid ? 0.14 : 0,
+    cfg.style === "peaks" ? peaks : null)
+
+  // The peaks style's caps: they follow every change of the levels, and a
+  // timer keeps them falling once the levels stop changing (silence sends
+  // no new frames).
+  property var peaks: []
+  property double peaksAt: 0
+  readonly property string styleKey: cfg.style
+  onStyleKeyChanged: {
+    peaks = []
+    peaksAt = 0
+    updatePeaks()
+  }
+  onLevelsChanged: updatePeaks()
+
+  function updatePeaks() {
+    if (cfg.style !== "peaks") {
+      if (peaks.length > 0) peaks = []
+      return
+    }
+    var now = Date.now()
+    var dt = peaksAt > 0 ? now - peaksAt : 0
+    peaksAt = now
+    peaks = PW.nextPeaks(peaks, levels, dt, rows)
+  }
+
+  Timer {
+    interval: 40
+    repeat: true
+    running: root.cfg.style === "peaks" && !root.hidden && PW.anyPeakAbove(root.peaks, root.levels, 0)
+    onTriggered: root.updatePeaks()
+  }
 
   // The microphone always draws in a colour the normal wave does not use.
   readonly property color foregroundInk: bar ? bar.barForeground : Commons.Color.foreground

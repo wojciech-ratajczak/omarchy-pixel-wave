@@ -3,7 +3,10 @@
 // Pure helpers for the Pixel Wave plugin, kept out of the QML so
 // tests/run.mjs can exercise them under Node.
 
-var STYLES = ["mirror", "bars", "dots"]
+var STYLES = ["mirror", "bars", "dots", "peaks", "drip", "flame", "pulse"]
+// Styles drawn from one edge of the bar rather than around a centre row, so
+// any row count works; the others need an odd count for the centre line.
+var EDGE_STYLES = ["bars", "peaks", "drip", "flame"]
 var DATA_MODES = ["spectrum", "loudness"]
 var COLORS = ["foreground", "accent"]
 
@@ -190,7 +193,7 @@ function fit(levels, n) {
 function rowsFor(available, cell, gap, style) {
   var pitch = Math.max(1, cell + gap)
   var rows = Math.max(1, Math.floor((available + gap) / pitch))
-  if (style !== "bars" && rows % 2 === 0) rows -= 1
+  if (EDGE_STYLES.indexOf(style) === -1 && rows % 2 === 0) rows -= 1
   return Math.max(1, rows)
 }
 
@@ -199,20 +202,127 @@ function shade(distance, maxDistance) {
   return 1 - 0.45 * (distance / maxDistance)
 }
 
+// Peak caps for the peaks style: each column's cap jumps to a new high,
+// holds there for PEAK_HOLD_MS, then falls one row every PEAK_FALL_MS.
+var PEAK_HOLD_MS = 400
+var PEAK_FALL_MS = 120
+
+function peakLevel(peak) {
+  var v = peak && typeof peak === "object" ? peak.level : peak
+  v = Number(v)
+  return isFinite(v) ? Math.max(0, Math.min(1, v)) : 0
+}
+
+// The caps after dtMs more milliseconds with these levels, as one
+// { level, hold } per column (hold = ms left before it starts to fall).
+// rows sets how far "one row" is in level units (default 5).
+function nextPeaks(prevPeaks, levels, dtMs, rows) {
+  var src = levels || []
+  var prev = prevPeaks || []
+  var dt = Math.max(0, Math.min(1000, Number(dtMs) || 0))
+  var steps = Math.max(1, (Number(rows) || 5) - 1)
+  var out = []
+  for (var c = 0; c < src.length; c++) {
+    var v = Math.max(0, Math.min(1, Number(src[c]) || 0))
+    var p = prev[c]
+    var level = peakLevel(p)
+    var hold = p && typeof p === "object" && isFinite(Number(p.hold)) ? Number(p.hold) : 0
+    if (v >= level) {
+      out.push({ level: v, hold: PEAK_HOLD_MS })
+      continue
+    }
+    if (hold >= dt) {
+      out.push({ level: level, hold: hold - dt })
+      continue
+    }
+    // The part of dt left after the hold ran out is spent falling.
+    var fallen = level - (dt - Math.max(0, hold)) / PEAK_FALL_MS / steps
+    out.push({ level: Math.max(v, fallen), hold: 0 })
+  }
+  return out
+}
+
+function anyPeakAbove(peaks, levels, threshold) {
+  if (!peaks) return false
+  for (var i = 0; i < peaks.length; i++) {
+    var l = levels && levels[i] !== undefined ? Number(levels[i]) || 0 : 0
+    if (peakLevel(peaks[i]) > Math.max(threshold, l)) return true
+  }
+  return false
+}
+
+// Opacity of the tip of a flame: the top cells fade out.
+var FLAME_TIP = [0.3, 0.55, 0.8]
+
+// Overall loudness of a set of levels for the pulse style: halfway between
+// their RMS and their loudest value, so it swells with the music without
+// sitting at full whenever one band peaks.
+function overallLevel(levels) {
+  var src = levels || []
+  if (src.length === 0) return 0
+  var sum = 0
+  var max = 0
+  for (var i = 0; i < src.length; i++) {
+    var v = Math.max(0, Math.min(1, Number(src[i]) || 0))
+    sum += v * v
+    if (v > max) max = v
+  }
+  return Math.min(1, (Math.sqrt(sum / src.length) + max) / 2)
+}
+
+// The pulse style: a centred glow whose size follows the overall loudness.
+// Distance is normalized per axis so the glow fills the width at full
+// volume; at silence it is a short dim line in the middle.
+function pulseOpacities(levels, columns, rows, grid, out) {
+  var amp = overallLevel(levels)
+  var hx = columns / 2
+  var hy = rows / 2
+  var cx = (columns - 1) / 2
+  var cy = (rows - 1) / 2
+  var minR = 1.6 / Math.max(1, hx)
+  var radius = minR + amp * (1.2 - minR)
+  var bright = 0.45 + 0.55 * amp
+  for (var c = 0; c < columns; c++) {
+    for (var r = 0; r < rows; r++) {
+      var dx = (c - cx) / hx
+      var dy = (r - cy) / hy
+      var d = Math.sqrt(dx * dx + dy * dy)
+      out[c * rows + r] = d <= radius ? Math.max(0.25, bright * (1 - 0.55 * d / radius)) : grid
+    }
+  }
+  return out
+}
+
 // Opacity of every cell, column-major (index = column * rows + row), row 0 at
-// the top. Silence still lights the centre row (mirror, dots) or the bottom
-// row (bars), so the widget rests as a flat line instead of vanishing.
-function cellOpacities(levels, columns, rows, style, gridOpacity) {
+// the top. Silence still lights the centre row (mirror, dots, pulse), the
+// bottom row (bars, peaks, flame) or the top row (drip), so the widget rests
+// as a flat line instead of vanishing. peaks (optional) are the caps of the
+// peaks style, from nextPeaks.
+function cellOpacities(levels, columns, rows, style, gridOpacity, peaks) {
   var out = new Array(columns * rows)
   var grid = gridOpacity || 0
+  if (style === "pulse") return pulseOpacities(levels, columns, rows, grid, out)
   var mid = (rows - 1) / 2
   for (var c = 0; c < columns; c++) {
     var v = Math.max(0, Math.min(1, Number(levels ? levels[c] : 0) || 0))
-    if (style === "bars") {
+    if (EDGE_STYLES.indexOf(style) !== -1) {
       var lit = 1 + Math.round(v * (rows - 1))
+      var cap = style === "peaks" && peaks ? Math.round(peakLevel(peaks[c]) * (rows - 1)) : -1
       for (var r = 0; r < rows; r++) {
-        var fromBottom = rows - 1 - r
-        out[c * rows + r] = fromBottom < lit ? shade(fromBottom, rows - 1) : grid
+        // Distance from the edge the column grows out of.
+        var e = style === "drip" ? r : rows - 1 - r
+        var o = grid
+        if (e < lit) {
+          if (style === "flame") {
+            var tip = lit - 1 - e
+            o = tip < FLAME_TIP.length ? FLAME_TIP[tip] : 1
+          } else {
+            o = shade(e, rows - 1)
+          }
+        } else if (e === cap) {
+          o = 1
+        }
+        out[c * rows + r] = o
       }
     } else {
       var h = Math.round(v * mid)
